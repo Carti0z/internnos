@@ -1,0 +1,426 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String              @id @default(cuid())
+  name              String?
+  email             String              @unique
+  password          String?
+  avatarUrl         String?             @map("avatar_url")
+  role              UserRole            @default(STUDENT)
+  experienceLevel   String?             @map("experience_level")
+  bio               String?
+  location          String?
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  
+  enrollments       Enrollment[]
+  submissions       Submission[]
+  userSkills        UserSkill[]
+  projects          Project[]
+  certificates      Certificate[]
+  aiConversations   AiConversation[]
+  assessments       Assessment[]
+  interviewSessions InterviewSession[]
+  subscriptions     Subscription[]
+  notifications     Notification[]
+  accounts          Account[]
+  sessions          Session[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+enum UserRole {
+  STUDENT
+  ADMIN
+  INSTRUCTOR
+  MENTOR
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String
+  category    String
+  level       String
+  durationWeeks Int    @map("duration_weeks")
+  thumbnail   String?
+  status      String   @default("draft")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  internships Internship[]
+
+  @@map("courses")
+}
+
+model Internship {
+  id              String    @id @default(cuid())
+  courseId        String    @map("course_id")
+  title           String
+  description     String
+  companyName     String    @map("company_name")
+  department      String
+  role            String
+  durationWeeks   Int       @map("duration_weeks")
+  difficulty      String
+  status          String    @default("draft")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  course          Course    @relation(fields: [courseId], references: [id])
+  enrollments     Enrollment[]
+  modules         Module[]
+
+  @@map("internships")
+}
+
+model Enrollment {
+  id                    String    @id @default(cuid())
+  userId                String    @map("user_id")
+  internshipId          String    @map("internship_id")
+  status                EnrollmentStatus @default(ACTIVE)
+  progressPercentage    Int       @default(0) @map("progress_percentage")
+  startDate             DateTime  @default(now()) @map("start_date")
+  expectedCompletionDate DateTime? @map("expected_completion_date")
+  completedAt           DateTime? @map("completed_at")
+  finalScore            Int?      @map("final_score")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  
+  user                  User      @relation(fields: [userId], references: [id])
+  internship            Internship @relation(fields: [internshipId], references: [id])
+
+  @@unique([userId, internshipId])
+  @@map("enrollments")
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+  CANCELLED
+}
+
+model Module {
+  id                String   @id @default(cuid())
+  internshipId      String   @map("internship_id")
+  title             String
+  description       String
+  weekNumber        Int      @map("week_number")
+  orderIndex        Int      @map("order_index")
+  learningObjectives String?  @map("learning_objectives")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  internship        Internship @relation(fields: [internshipId], references: [id])
+  lessons           Lesson[]
+  tasks             Task[]
+
+  @@map("modules")
+}
+
+model Lesson {
+  id               String   @id @default(cuid())
+  moduleId         String   @map("module_id")
+  title            String
+  content          String   @db.Text
+  lessonType       LessonType @map("lesson_type")
+  estimatedMinutes Int      @map("estimated_minutes")
+  orderIndex       Int      @map("order_index")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  
+  module           Module   @relation(fields: [moduleId], references: [id])
+
+  @@map("lessons")
+}
+
+enum LessonType {
+  VIDEO
+  ARTICLE
+  INTERACTIVE
+  QUIZ
+  SIMULATION
+}
+
+model Task {
+  id                String         @id @default(cuid())
+  moduleId          String         @map("module_id")
+  title             String
+  description       String         @db.Text
+  instructions      String         @db.Text
+  difficulty        String
+  estimatedHours    Int            @map("estimated_hours")
+  deadline          DateTime?
+  submissionType    SubmissionType @map("submission_type")
+  evaluationCriteria String?        @map("evaluation_criteria")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+  
+  module            Module         @relation(fields: [moduleId], references: [id])
+  submissions       Submission[]
+
+  @@map("tasks")
+}
+
+enum SubmissionType {
+  TEXT
+  FILE
+  GITHUB
+  URL
+  IMAGE
+  PDF
+  EXCEL
+  PRESENTATION
+}
+
+model Submission {
+  id              String          @id @default(cuid())
+  taskId          String          @map("task_id")
+  userId          String          @map("user_id")
+  submissionUrl   String?         @map("submission_url")
+  content         String?         @db.Text
+  fileUrl         String?         @map("file_url")
+  githubUrl       String?         @map("github_url")
+  submittedAt     DateTime        @default(now()) @map("submitted_at")
+  status          SubmissionStatus @default(PENDING)
+  score           Int?
+  feedback        String?         @db.Text
+  reviewedAt      DateTime?       @map("reviewed_at")
+  
+  task            Task            @relation(fields: [taskId], references: [id])
+  user            User            @relation(fields: [userId], references: [id])
+
+  @@map("submissions")
+}
+
+enum SubmissionStatus {
+  PENDING
+  UNDER_REVIEW
+  NEEDS_REVISION
+  APPROVED
+}
+
+model Skill {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  category    String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  userSkills  UserSkill[]
+
+  @@map("skills")
+}
+
+model UserSkill {
+  id                String       @id @default(cuid())
+  userId            String       @map("user_id")
+  skillId           String       @map("skill_id")
+  proficiencyLevel  ProficiencyLevel @map("proficiency_level")
+  score             Int?
+  evidenceCount     Int          @default(0) @map("evidence_count")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+  
+  user              User         @relation(fields: [userId], references: [id])
+  skill             Skill        @relation(fields: [skillId], references: [id])
+
+  @@unique([userId, skillId])
+  @@map("user_skills")
+}
+
+enum ProficiencyLevel {
+  BEGINNER
+  DEVELOPING
+  INTERMEDIATE
+  ADVANCED
+}
+
+model Project {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  internshipId    String    @map("internship_id")
+  title           String
+  description     String    @db.Text
+  repositoryUrl   String?   @map("repository_url")
+  liveUrl         String?   @map("live_url")
+  imageUrl        String?   @map("image_url")
+  technologies    String[]  @default([])
+  status          String    @default("draft")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@map("projects")
+}
+
+model Certificate {
+  id                 String   @id @default(cuid())
+  userId             String   @map("user_id")
+  internshipId      String   @map("internship_id")
+  certificateNumber  String   @unique @map("certificate_number")
+  issueDate          DateTime @default(now()) @map("issue_date")
+  completionDate     DateTime @map("completion_date")
+  finalScore         Int      @map("final_score")
+  verificationToken  String   @unique @map("verification_token")
+  certificateUrl     String?  @map("certificate_url")
+  
+  user               User     @relation(fields: [userId], references: [id])
+
+  @@map("certificates")
+}
+
+model AiConversation {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  agentType String   @map("agent_type")
+  title     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  user      User     @relation(fields: [userId], references: [id])
+  messages  AiMessage[]
+
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String   @id @default(cuid())
+  conversationId String   @map("conversation_id")
+  role           String
+  content        String   @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  conversation   AiConversation @relation(fields: [conversationId], references: [id])
+
+  @@map("ai_messages")
+}
+
+model Assessment {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  internshipId String   @map("internship_id")
+  type          String
+  score         Int?
+  feedback      String?  @db.Text
+  completedAt   DateTime? @map("completed_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@map("assessments")
+}
+
+model InterviewSession {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  internshipId   String   @map("internship_id")
+  interviewType  String   @map("interview_type")
+  status         String   @default("pending")
+  score          Int?
+  feedback       String?  @db.Text
+  startedAt      DateTime? @map("started_at")
+  completedAt    DateTime? @map("completed_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  user           User     @relation(fields: [userId], references: [id])
+  questions      InterviewQuestion[]
+
+  @@map("interview_sessions")
+}
+
+model InterviewQuestion {
+  id                String   @id @default(cuid())
+  interviewSessionId String   @map("interview_session_id")
+  question          String   @db.Text
+  answer            String?  @db.Text
+  score             Int?
+  feedback          String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+  
+  interviewSession  InterviewSession @relation(fields: [interviewSessionId], references: [id])
+
+  @@map("interview_questions")
+}
+
+model Subscription {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  plan           String
+  provider       String
+  providerReference String? @map("provider_reference")
+  amount         Float
+  currency       String
+  status         String
+  startedAt      DateTime @default(now()) @map("started_at")
+  expiresAt      DateTime? @map("expires_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  user           User     @relation(fields: [userId], references: [id])
+
+  @@map("subscriptions")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  title     String
+  message   String   @db.Text
+  type      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}

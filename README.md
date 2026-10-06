@@ -1,36 +1,131 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# InternOS
+
+**Learn. Work. Get Reviewed. Get Career-Ready.**
+
+InternOS is an AI-powered virtual internship platform that provides students and career beginners with realistic, AI-driven virtual internships across multiple career paths.
+
+## Tech Stack
+
+- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS
+- **Backend**: Next.js App Router, Server Actions, REST API routes
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: NextAuth.js
+- **AI**: OpenAI (configurable)
+- **State Management**: TanStack Query
+- **Form Validation**: React Hook Form + Zod
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ 
+- PostgreSQL database
+- npm or yarn
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Set up environment variables:
+```bash
+cp env.example .env
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Edit `.env` with your configuration:
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/internos?schema=public"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key-here"
+OPENAI_API_KEY="your-openai-api-key-here"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Set up the database:
+```bash
+npx prisma migrate dev --name init
+```
 
-## Learn More
+5. Generate Prisma Client:
+```bash
+npx prisma generate
+```
 
-To learn more about Next.js, take a look at the following resources:
+6. Run the development server:
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+src/
+├── app/              # Next.js App Router
+├── components/       # React components
+├── lib/             # Utility functions
+├── services/        # Business logic
+├── ai/              # AI agents
+├── database/        # Database utilities
+├── types/           # TypeScript types
+├── hooks/           # Custom React hooks
+└── utils/           # Helper functions
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Features
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 🔐 User authentication with NextAuth.js
+- 🎓 Multiple career paths (Software Engineering, Data Analysis, UI/UX Design)
+- 🤖 AI-powered internship management
+- 📝 Task submission and AI review
+- 💬 AI mentor chat
+- 🎯 Skills tracking
+- 📊 Performance analytics
+- 🏆 Certificate generation
+- 💼 Portfolio builder
+- 📱 Responsive design
+
+## Development
+
+### Database Migrations
+
+```bash
+npx prisma migrate dev
+```
+
+### Database Studio
+
+```bash
+npx prisma studio
+```
+
+### Type Checking
+
+```bash
+npm run build
+```
+
+### Linting
+
+```bash
+npm run lint
+```
+
+## Deployment
+
+This project is designed to be deployed on Vercel with Supabase for the database.
+
+### Environment Variables
+
+Ensure these are set in your production environment:
+- `DATABASE_URL`
+- `NEXTAUTH_URL`
+- `NEXTAUTH_SECRET`
+- `OPENAI_API_KEY`
+
+## License
+
+MIT
