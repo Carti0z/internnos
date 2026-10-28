@@ -230,6 +230,7 @@ model Submission {
   content         String?         @db.Text
   fileUrl         String?         @map("file_url")
   githubUrl       String?         @map("github_url")
+  liveUrl         String?         @map("live_url")
   submittedAt     DateTime        @default(now()) @map("submitted_at")
   status          SubmissionStatus @default(PENDING)
   score           Int?

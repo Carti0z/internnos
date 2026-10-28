@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth"
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -15,12 +15,14 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { content, githubUrl, liveUrl } = body
+    const { content, githubUrl } = body
+
+    const { id } = await params
 
     // Check if user already has a pending submission
     const existingSubmission = await prisma.submission.findFirst({
       where: {
-        taskId: params.id,
+        taskId: id,
         userId: (session.user as any).id,
         status: {
           in: ["PENDING", "UNDER_REVIEW"],
@@ -38,11 +40,10 @@ export async function POST(
     // Create submission
     const submission = await prisma.submission.create({
       data: {
-        taskId: params.id,
+        taskId: id,
         userId: (session.user as any).id,
         content,
         githubUrl,
-        liveUrl,
         status: "PENDING",
       },
     })
